@@ -1,0 +1,29 @@
+#INCLUDE "PROTHEUS.ch"
+
+/*
+	FUNCIÓN DECORADORA QUE INICIALIZA VARIABLES PRIVADAS CON REFERENCIA A ÍNDICES 
+	DE ARRAY PÚBLICO __aDescTec para consultarlos más fácilmente. Recibe como parámetro 
+	la función que contendrá, sin comillas, y la alojará en un bloque de código para ejecutarla
+*/
+User function DecorDT(funcion)
+
+// POSICIÓN DE DATOS DEL ARRAY PÚBLICO
+private nPosNumPV 	:= 1 // NÚMERO DE PEDIDO DE VENTA
+private nPItemPV 	:= 2 // ITEM EN PEDIDO DE VENTA
+private nPosProd 	:= 3 // CÓDIGO DE PRODUCTO
+private nPDescPr 	:= 4 // DESCRIPCIÓN DEL PRODUCTO
+private nPDescTec 	:= 5 // DESCRIPCIÓN TÉCNICA
+
+// RASTREO DE NRO PEDIDO DE VENTA EN MEMORIA
+private cNroPedVen := M->C5_NUM
+
+// RASTREO DE AHEADER BUSCANDO LA POSICIÓN DE LOS CAMPOS C6_ITEM Y C6_PRODUTO
+// Y SE ALOJA EL NÚMERO DEVUELTO POR ASCAN EN UNA VARIABLE DE POSICIÓN
+private nPProduto	:= aScan(aHeader,{|x| AllTrim(x[2])=="C6_PRODUTO"})
+private nPosItem	:= aScan(aHeader,{|x| AllTrim(x[2])=="C6_ITEM"})
+
+bFunc = {|| funcion}
+
+	EVAL(bFunc)	
+
+return

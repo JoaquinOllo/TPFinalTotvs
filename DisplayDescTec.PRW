@@ -1,0 +1,76 @@
+#INCLUDE "PROTHEUS.ch"
+
+
+/*
+	FUNCIÓN QUE MUESTRA PANTALLA DE VISUALIZACIÓN Y EDICIÓN DE DESCRIPCIÓN TÉCNICA
+*/
+User function displayDescTec()
+
+local oDlg := nil
+local oMemo := nil
+
+// CON LAS VARIABLES DE POSICIÓN, SE OBTIENEN EL ITEM Y EL CODIGO DE PRODUCTO DE ACOLS
+private cItem := aCols[n][nPosItem]
+private cProducto := aCols[n][nPProduto]
+
+private aDescTec := u_GetDescTec() // ARRAY CON DATOS DEL PRODUCTO
+
+	if aDescTec[1] == "Alerta"
+		msgalert(aDescTec[2], aDescTec[1])
+		return
+	endif
+
+// private cPrevDT := aDescTec[nPDescTec] // DESCRIPCIÓN TÉCNICA GUARDADA ANTES DE CUALQUIER CAMBIO, POR VALIDACIONES
+
+	DEFINE MSDIALOG oDlg TITLE "DESCRIPCIÓN TÉCNICA DEL ÍTEM" FROM 0, 0 TO 400, 600 PIXEL
+
+	
+	
+	// CABECERA
+		// CÓDIGO DE PRODUCTO
+	@ 05,05 SAY OemToAnsi("CÓDIGO DE PRODUCTO: ") SIZE 30,50 OF oDlg PIXEL	
+	@ 05,38 MsGet aDescTec[nPDescPr] WHEN .F. SIZE 50,10 OF oDlg PIXEL
+	
+		// ITEM EN PEDIDO DE VENTA
+	@ 05,220 SAY OemToAnsi("ITEM: ") SIZE 30,15 OF oDlg PIXEL
+	@ 05,240 MsGet aDescTec[nPItemPV] WHEN .F. SIZE 50, 10 PIXEL OF oDlg
+	
+	// CUERPO, CON CAMPO EDITABLE DE DESCRIPCIÓN TÉCNICA
+	@ 20,06 GET oMemo VAR aDescTec[nPDescTec] MEMO WHEN ALTERA .or. INCLUI SIZE 292, 150 PIXEL OF oDlg	
+	
+
+	// BOTONES
+	@ 175, 224 Button "Confirmar" SIZE 35,12 PIXEL OF oDlg ACTION (DTenArray(), oDlg:End() )
+	// AL CONFIRMAR, SE VALIDA LA DESCRIPCIÓN TÉCNICA Y SE GUARDAN LOS DATOS
+	@ 175,262 Button "Cancelar" SIZE 35,12 PIXEL OF oDlg ACTION oDlg:End()
+	
+	ACTIVATE MSDIALOG oDlg CENTERED
+
+
+return
+
+/*
+	FUNCIÓN ENCARGADA DE VALIDAR SI HUBO CAMBIOS O NO EN LA DESCTEC AL PRESIONAR CONFIRMAR,
+	Y SI LOS HUBO LOS AGREGA AL ARRAY PÚBLICO DEL PEDIDO DE VENTA.
+*/
+static function DTenArray()
+
+// RASTREAMOS EN __aDescTec POR EL ITEM DEL PEDIDO DE VENTA CUYA DESCTEC ESTÁ SIENDO EDITADA.
+// SU POSICIÓN, O "0", QUEDA ALOJADA AQUÍ
+local nPosArPbl := aScan (__aDescTec, {|x| x[nPosNumPV] == cNroPedVen ; 
+				.and. x[nPItemPV] == cItem .and. x[nPosProd] == cProducto})
+
+// EVALUAMOS SI EL CAMPO EDITADO POR EL USUARIO DE DESCTEC, Y EL ALOJADO EN MEMORIA AL ABRIR LA PANTALLA, SON DISTINTOS.
+// local lHuboCambios := aDescTec[nPDescTec] <> cPrevDT
+
+	if nPosArPbl == 0 // .and. lHuboCambios
+	// SI EL CAMPO FUE EDITADO POR EL USUARIO Y EL ARRAY PÚBLICO NO CONTIENE UN ELEMENTO DEL MISMO ÍTEM Y CÓDIGO...
+		AADD(__aDescTec, aDescTec) // LO AGREGAMOS AL ARRAY PÚBLICO
+	else //if lHuboCambios
+	// SI EL CAMPO FUE EDITADO PERO YA HAY UN ELEMENTO CON EL MISMO ÍTEM Y CÓDIGO EN __aDescTec...
+		__aDescTec[nPosArPbl][nPDescTec] := aDescTec[nPDescTec]
+		// ÚNICAMENTE CAMBIAMOS LA DESCTEC.
+	endif
+	
+
+return

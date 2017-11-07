@@ -1,0 +1,9 @@
+#INCLUDE "PROTHEUS.ch"
+
+user function M410STTS()
+
+	if isincallstack("MATA410") .and. (ALTERA .or. INCLUI)
+		DecorDT({||u_GrbDesTec()})
+	endif
+
+return
