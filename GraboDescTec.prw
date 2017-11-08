@@ -1,35 +1,93 @@
 #INCLUDE "PROTHEUS.ch"
 
+/*
+	FUNCIÓN LLAMADA POR M410STTS, PARA GRABAR LAS DESCRIPCIONES TÉCNICAS 
+	DE CADA ITEM DE UN PEDIDO DE VENTAS EN LA ZDT
+*/
 user function GrbDesTec()
 
-local nX := 1
+local nX := 1 // CONTADOR PARA FOR
+// VARIABLES USADA EN FOR PARA ALOJAR ITEM DE PV, CÓDIGO DE PRODUCTO Y DESC.TEC. TEMPORALMENTE
+local cTempItem := ""
+local cTempProd := ""
+local cTempDesTec := ""
 
+aArea := GetArea()
+aAreaZDT := ZDT->(GetArea())
+aAreaSB1 := SB1->(GetArea())
+	
+/* BUCLE QUE RECORRE ACOLS, BUSCANDO ITEMS DE PV QUE NO ESTÉN EN __ADESCTEC NI EN ZDT,
+	Y LOS GUARDA EN LA TABLA ZDT
+*/
+	for nX := 1 TO len(aCols)
+	cTempItem := aCols[nX][nPosItem]
+	cTempProd := aCols[nX][nPProduto]
+		if aScan(__aDescTec, {|x| x[nPosNumPV] == cNroPedVen ; 
+				.and. x[nPItemPV] == cTempItem}) == 0 ;
+				.and. ExistChav( "ZDT", xFILIAL("ZDT") + cNroPedVen + cTempItem, 1 )
+		// SI UN ITEM DE ACOLS NO ES ENCONTRADO EN __ADESCTEC NI EN ZDT...
+		dbselectarea("SB1")
+		dbsetorder(1)
+			// SE BUSCA SU DESC.TEC. EN LA SB1, Y SE ALOJA EN UNA VARIABLE TEMPORAL
+			if dbseek(xFilial("SB1") + cTempProd)
+				cTempDesTec := SB1->B1_XDESTEC
+			endif
+		
+			// SE PASAN LAS VARIABLES TEMPORALES COMO PARÁMETROS A LA FUNCIÓN DE GUARDADO
+			// PARA CREAR UN REGISTRO NUEVO
+			SaveInZDT(cTempItem, cTempProd, cTempDesTec)
+				
+		endif
+	
+	next nX
+	
+	dbselectarea("ZDT")
+	dbsetorder(1)
+	
+	// SE RECORRE __ADESCTEC...
+	for nX := 1 TO len(__aDescTec)
+		// SE EVALÚA SI EL NÚMERO DE PEDIDO DE VENTA DEL ARRAY ES IGUAL AL ACTUAL
+		if __aDescTec[nX][nPosNumPV] == cNroPedVen
+		
+			// SI SE ENCUENTRA UN REGISTRO PARA ESE PEDIDO DE VENTAS E ÍTEM, SE LO EDITA
+			if dbseek(xFILIAL("ZDT") + cNroPedVen + __aDescTec[nX][nPItemPV])
+				reclock("ZDT", .F.)
+				ZDT->ZDT_DESTEC := __aDescTec[nX][nPDescTec]
+				msunlock()                   
+				
+			// SI NO SE ENCUENTRA UN REGISTRO EN ZDT, SE CREA UNO NUEVO Y GUARDAN LOS DATOS
+			else			
+				SaveInZDT(__aDescTec[nX][nPItemPV], __aDescTec[nX][nPosProd], __aDescTec[nX][nPDescTec])
+			endif
+		endif
+	next nX
+	
+__aDescTec := {}
+
+RestArea(aArea)
+RestArea(aAreaZDT)
+RestArea(aAreaSB1)
+return
+
+/*
+	FUNCIÓN PARA CREAR UN REGISTRO NUEVO EN ZDT Y GUARDAR LA DESC.TEC.
+	DE UN ITEM DE PEDIDO DE VENTAS.
+*/
+static function SaveInZDT(cItem, cProducto, cDescTec)
 aArea := GetArea()
 aAreaZDT := ZDT->(GetArea())
 
 	dbselectarea("ZDT")
 	dbsetorder(1)
 	
-	for nX := 1 TO len(__aDescTec)
-		if __aDescTec[nX][nPosNumPV] == cNroPedVen
-			if dbseek(xFILIAL("ZDT") + cNroPedVen + __aDescTec[nX][nPItemPV])
-				reclock("ZDT", .F.)
-				ZDT->ZDT_DESTEC := __aDescTec[nX][nPDescTec]
-				msunlock()
-			else
-				ZDT->(DBAppend())
-				reclock("ZDT", .F.)
-				ZDT->ZDT_FILIAL := xFILIAL("ZDT")
-				ZDT->ZDT_NUMPV := __aDescTec[nX][nPosNumPV]
-				ZDT->ZDT_PRODUC := __aDescTec[nX][nPosProd]
-				ZDT->ZDT_ITEMPV := __aDescTec[nX][nPItemPV]
-				ZDT->ZDT_DESTEC := __aDescTec[nX][nPDescTec]
-				msunlock()
-			endif
-		endif
-	next nX
-	
-__aDescTec := {}
+	ZDT->(DBAppend())
+	reclock("ZDT", .F.)
+	ZDT->ZDT_FILIAL := xFILIAL("ZDT")
+	ZDT->ZDT_NUMPV := cNroPedVen
+	ZDT->ZDT_PRODUC := cProducto
+	ZDT->ZDT_ITEMPV := cItem
+	ZDT->ZDT_DESTEC := cDescTec
+	msunlock()
 
 RestArea(aArea)
 RestArea(aAreaZDT)

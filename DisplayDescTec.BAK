@@ -9,10 +9,6 @@ User function displayDescTec()
 local oDlg := nil
 local oMemo := nil
 
-// CON LAS VARIABLES DE POSICIÓN, SE OBTIENEN EL ITEM Y EL CODIGO DE PRODUCTO DE ACOLS
-private cItem := aCols[n][nPosItem]
-private cProducto := aCols[n][nPProduto]
-
 private aDescTec := u_GetDescTec() // ARRAY CON DATOS DEL PRODUCTO
 
 	if aDescTec[1] == "Alerta"
@@ -72,20 +68,5 @@ local nPosArPbl := aScan (__aDescTec, {|x| x[nPosNumPV] == cNroPedVen ;
 		// ÚNICAMENTE CAMBIAMOS LA DESCTEC.
 	endif
 	
-
-return
-
-User function DecorDT(func)
-
-// POSICIÓN DE DATOS DEL ARRAY
-private nPosNumPV 	:= 1 // NÚMERO DE PEDIDO DE VENTA
-private nPItemPV 	:= 2 // ITEM EN PEDIDO DE VENTA
-private nPosProd 	:= 3 // CÓDIGO DE PRODUCTO
-private nPDescPr 	:= 4 // DESCRIPCIÓN DEL PRODUCTO
-private nPDescTec 	:= 5 // DESCRIPCIÓN TÉCNICA
-
-private cNroPedVen := M->C5_NUM
-
-	EVAL(func)	
 
 return

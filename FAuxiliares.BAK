@@ -22,8 +22,10 @@ private cNroPedVen := M->C5_NUM
 private nPProduto	:= aScan(aHeader,{|x| AllTrim(x[2])=="C6_PRODUTO"})
 private nPosItem	:= aScan(aHeader,{|x| AllTrim(x[2])=="C6_ITEM"})
 
-bFunc = {|| funcion}
+// CON LAS VARIABLES DE POSICIÓN, SE OBTIENEN EL ITEM Y EL CODIGO DE PRODUCTO DE ACOLS
+private cItem := aCols[n][nPosItem]
+private cProducto := aCols[n][nPProduto]
 
-	EVAL(bFunc)	
+	EVAL(funcion)	
 
 return
